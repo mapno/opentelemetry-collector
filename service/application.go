@@ -115,7 +115,7 @@ func New(params Parameters) (*Application, error) {
 				return fmt.Errorf("failed to get logger: %w", err)
 			}
 
-			return app.execute(context.Background())
+			return app.execute(cmd.Context())
 		},
 	}
 
