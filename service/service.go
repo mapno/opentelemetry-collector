@@ -162,7 +162,7 @@ func New(params Parameters) (*Application, error) {
 				return err
 			}
 
-			err = app.execute(context.Background(), factory)
+			err = app.execute(cmd.Context(), factory)
 			if err != nil {
 				return err
 			}
