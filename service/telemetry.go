@@ -24,6 +24,7 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.uber.org/zap"
 
+	prom_client "github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/exporter/jaegerexporter"
 	"go.opentelemetry.io/collector/internal/collector/telemetry"
@@ -38,7 +39,7 @@ import (
 var applicationTelemetry appTelemetryExporter = &appTelemetry{}
 
 type appTelemetryExporter interface {
-	init(asyncErrorChannel chan<- error, ballastSizeBytes uint64, logger *zap.Logger) error
+	init(reg *prom_client.Registry, asyncErrorChannel chan<- error, ballastSizeBytes uint64, logger *zap.Logger) error
 	shutdown() error
 }
 
@@ -47,7 +48,7 @@ type appTelemetry struct {
 	server *http.Server
 }
 
-func (tel *appTelemetry) init(asyncErrorChannel chan<- error, ballastSizeBytes uint64, logger *zap.Logger) error {
+func (tel *appTelemetry) init(reg *prom_client.Registry, asyncErrorChannel chan<- error, ballastSizeBytes uint64, logger *zap.Logger) error {
 	level := configtelemetry.GetMetricsLevelFlagValue()
 	metricsAddr := telemetry.GetMetricsAddr()
 
@@ -78,6 +79,7 @@ func (tel *appTelemetry) init(asyncErrorChannel chan<- error, ballastSizeBytes u
 	// Until we can use a generic metrics exporter, default to Prometheus.
 	opts := prometheus.Options{
 		Namespace: telemetry.GetMetricsPrefix(),
+		Registry:  reg,
 	}
 
 	var instanceID string

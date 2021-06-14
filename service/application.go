@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -77,6 +78,9 @@ type Application struct {
 
 	// asyncErrorChannel is used to signal a fatal error from any component.
 	asyncErrorChannel chan error
+
+	// metricsRegistry is a registry for the app's telemetry
+	metricsRegistry *prometheus.Registry
 }
 
 // New creates and returns a new instance of Application.
@@ -86,9 +90,10 @@ func New(set AppSettings) (*Application, error) {
 	}
 
 	app := &Application{
-		info:         set.BuildInfo,
-		factories:    set.Factories,
-		stateChannel: make(chan State, Closed+1),
+		info:            set.BuildInfo,
+		factories:       set.Factories,
+		stateChannel:    make(chan State, Closed+1),
+		metricsRegistry: set.MetricsRegistry,
 	}
 
 	rootCmd := &cobra.Command{
@@ -169,7 +174,7 @@ func (app *Application) Shutdown() {
 func (app *Application) setupTelemetry(ballastSizeBytes uint64) error {
 	app.logger.Info("Setting up own telemetry...")
 
-	err := applicationTelemetry.init(app.asyncErrorChannel, ballastSizeBytes, app.logger)
+	err := applicationTelemetry.init(app.metricsRegistry, app.asyncErrorChannel, ballastSizeBytes, app.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize telemetry: %w", err)
 	}
