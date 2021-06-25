@@ -15,6 +15,7 @@
 package service
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
 	"go.opentelemetry.io/collector/component"
@@ -56,4 +57,7 @@ type AppSettings struct {
 
 	// LoggingOptions provides a way to change behavior of zap logging.
 	LoggingOptions []zap.Option
+
+	// MetricsRegisterer configures the Registerer for the application's telemetry.
+	MetricsRegisterer prometheus.Registerer
 }

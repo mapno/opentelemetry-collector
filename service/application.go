@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -61,6 +62,7 @@ type Application struct {
 	info    component.BuildInfo
 	rootCmd *cobra.Command
 	logger  *zap.Logger
+	reg     prometheus.Registerer
 
 	service      *service
 	stateChannel chan State
@@ -89,6 +91,7 @@ func New(set AppSettings) (*Application, error) {
 		info:         set.BuildInfo,
 		factories:    set.Factories,
 		stateChannel: make(chan State, Closed+1),
+		reg:          set.MetricsRegisterer,
 	}
 
 	rootCmd := &cobra.Command{
@@ -169,7 +172,7 @@ func (app *Application) Shutdown() {
 func (app *Application) setupTelemetry(ballastSizeBytes uint64) error {
 	app.logger.Info("Setting up own telemetry...")
 
-	err := applicationTelemetry.init(app.asyncErrorChannel, ballastSizeBytes, app.logger)
+	err := applicationTelemetry.init(app.asyncErrorChannel, ballastSizeBytes, app.logger, app.reg)
 	if err != nil {
 		return fmt.Errorf("failed to initialize telemetry: %w", err)
 	}
